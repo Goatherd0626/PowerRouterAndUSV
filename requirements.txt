@@ -1,7 +1,7 @@
 matplotlib==3.7.2
 numpy==1.25.2
 pandas==2.1.0
-pynput==1.7.6
+# pynput==1.7.6
 websockets==11.0.3
 fastapi==0.103.1
 uvicorn==0.23.2

@@ -2,12 +2,12 @@ version: '3'
 
 services:
   blockplot:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "8848:8000"
     volumes:
       - ./:/app
-    restart: unless-stopped
-    container_name: blockplot-simulator 
+    restart: always
+    container_name: blockplot-simulator

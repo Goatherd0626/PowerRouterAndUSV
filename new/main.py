@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 import logging
 import sys
 import os
-from pynput import keyboard
+# from pynput import keyboard
 import websockets
 import asyncio
 import json
@@ -136,11 +136,11 @@ def logging_set():
     logging.getLogger('').addHandler(console)
     os.chdir('..')
 
-def on_press(key):
-    global isESC
-    if key == keyboard.Key.esc:
-        isESC = True
-        return False  # 停止监听器
+# def on_press(key):
+#     global isESC
+#     if key == keyboard.Key.esc:
+#         isESC = True
+#         return False  # 停止监听器
 
 async def websocket_handler(websocket, path):
     global client_ws
@@ -201,8 +201,8 @@ def start_simulation(push_to_frontend):
     simu_step = timedelta(minutes=15)
     # while True:中接收esc键值自动停止
     isESC = False
-    listener = keyboard.Listener(on_press=on_press)
-    listener.start()
+    # listener = keyboard.Listener(on_press=on_press)
+    # listener.start()
     while not isESC:
         t_start = time.time()
         current_time += simu_step
