@@ -1,0 +1,11 @@
+.vscode/
+.idea/
+*.pyc
+*.log
+celerybeat-schedule
+.DS_Store
+avatar.png
+*.csv
+.venv/
+new/__pycache__/
+__pycache__/
