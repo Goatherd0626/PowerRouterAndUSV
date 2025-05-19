@@ -8,6 +8,7 @@ import os
 import sys
 import numpy as np
 import logging
+import signal
 # 将new目录添加到系统路径，以便导入其中的模块
 sys.path.append(os.path.join(os.path.dirname(__file__), 'new'))
 from new.main import start_simulation
@@ -39,11 +40,12 @@ manager = ConnectionManager()
 # 全局变量，指示仿真是否在运行
 simulation_running = False
 simulation_thread = None
+stop_simulation_flag = False  # 用于通知仿真线程停止
 
 # WebSocket路由
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    global simulation_running, simulation_thread
+    global simulation_running, simulation_thread, stop_simulation_flag
     
     await manager.connect(websocket)
     try:
@@ -55,13 +57,32 @@ async def websocket_endpoint(websocket: WebSocket):
                 await websocket.send_json({"status": "starting", "message": "仿真开始启动..."})
                 
                 # 在新线程中启动仿真
+                stop_simulation_flag = False
                 simulation_running = True
                 simulation_thread = threading.Thread(target=run_simulation)
                 simulation_thread.daemon = True
                 simulation_thread.start()
+            
+            elif data == "stop" and simulation_running:
+                await websocket.send_json({"status": "stopping", "message": "正在停止仿真..."})
+                
+                # 设置停止标志
+                stop_simulation_flag = True
+                
+                # 如果线程仍在运行，等待它结束
+                if simulation_thread and simulation_thread.is_alive():
+                    # 在另一个线程中等待，避免阻塞WebSocket响应
+                    def wait_for_thread():
+                        global simulation_running
+                        simulation_thread.join(timeout=10)  # 最多等待10秒
+                        simulation_running = False
+                    
+                    threading.Thread(target=wait_for_thread, daemon=True).start()
+                
+                await websocket.send_json({"status": "stopped", "message": "仿真已停止"})
                 
             else:
-                await websocket.send_json({"status": "error", "message": "无效命令或仿真已在运行"})
+                await websocket.send_json({"status": "error", "message": "无效命令或仿真已在运行/停止"})
     
     except WebSocketDisconnect:
         manager.disconnect(websocket)
@@ -100,16 +121,22 @@ def sync_broadcast(data):
     except Exception as e:
         print(f"广播数据时出错: {str(e)}")
 
+# 检查是否应该停止仿真
+def should_stop_simulation():
+    global stop_simulation_flag
+    return stop_simulation_flag
+
 # 在单独的线程中运行仿真
 def run_simulation():
-    global simulation_running
+    global simulation_running, stop_simulation_flag
     try:
         # 使用同步的包装函数
-        start_simulation(sync_broadcast)
+        start_simulation(sync_broadcast, should_stop_simulation)
     except Exception as e:
         print(f"仿真运行过程中出现错误: {str(e)}")
     finally:
         simulation_running = False
+        stop_simulation_flag = False
 
 # 启动事件循环的线程
 def start_loop():

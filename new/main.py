@@ -170,7 +170,14 @@ def start_websocket_server():
 # ws_thread.start()
 nm2m = 1852  # Nautical miles to meters conversion
 
-def start_simulation(push_to_frontend):
+def start_simulation(push_to_frontend, stop_check=None):
+    """
+    启动仿真
+    
+    参数:
+    - push_to_frontend: 用于向前端发送数据的函数
+    - stop_check: 可选的回调函数，用于检查是否应该停止仿真
+    """
     logging_set()
     '''
     初始化充电节点和船舶代理
@@ -204,6 +211,11 @@ def start_simulation(push_to_frontend):
     # listener = keyboard.Listener(on_press=on_press)
     # listener.start()
     while not isESC:
+        # 检查是否应该停止仿真
+        if stop_check and stop_check():
+            logging.info("收到停止信号，正在停止仿真...")
+            break
+            
         t_start = time.time()
         current_time += simu_step
         time_text = current_time.strftime("%H:%M")
@@ -241,7 +253,7 @@ def start_simulation(push_to_frontend):
             "CNInfo": CNInfo,
             "time": time_text
         }
-        logging.info(">>>>>>>>>>data_to_send<<<<<<<<<<{}".format(data_to_send))
+        # logging.info(">>>>>>>>>>push_to_frontend<<<<<<<<<<",json.dumps(data_to_send))
         push_to_frontend(data_to_send)
         
         # TimeStamp.set_text(time_text)
