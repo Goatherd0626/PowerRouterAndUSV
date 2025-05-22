@@ -1,21 +1,18 @@
 from Astar_formal import AStarPlanner
 from Island import getCN
 from Agent import getAgent,Agent
-
 import math
 import numpy as np
-# from matplotlib import pyplot as plt
 import time
 import datetime
-from datetime import datetime, timedelta
 import logging
 import sys
 import os
 # from pynput import keyboard
 import websockets
 import asyncio
-import json
 # import threading
+
 
 def initialize_agents_and_charge_nodes():
     # Initialize Charge Nodes
@@ -50,57 +47,6 @@ def create_random_obstacles(random_seed=42):
 
     return obstacles
 
-# def plot_map(obstacles, charge_nodes, agents):
-#     # 不要用subplot
-#     fig = plt.figure(figsize=(10, 8))
-#     ax = fig.add_subplot(111)
-#     ax.set_xlim(0, 225 * nm2m)
-#     ax.set_ylim(0, 130 * nm2m)
-#     ax.set_title('Map')
-#     ax.set_xlabel('X (m)')
-#     ax.set_ylabel('Y (m)')
-#     # 绘制障碍物
-#     for obstacle in obstacles:
-#         polygon = plt.Polygon(obstacle, closed=True, fill=True, color='gray', alpha=0.5)
-#         ax.add_patch(polygon)
-    
-#     # 绘制Charge Nodes, 绿色圆圈
-#     for cn in charge_nodes:
-#         # print(cn.posX, cn.posY)
-#         circle = plt.Circle((cn.posX, cn.posY), 10000, color='green', alpha=0.5)
-#         ax.add_patch(circle)
-#         ax.text(cn.posX, cn.posY, str(cn.id), fontsize=12, ha='center', va='center', color='black')
-        
-#     # 绘制船舶代理, plt.plot(x, y)，并用橘色三角形表示
-#     agents_plt = []
-#     texts_plt = []
-#     for agent in agents:
-#         moving_agent, = ax.plot([], [], '^', color='#FFD580', markersize=20, label='Agent')
-#         moving_text = ax.text([], [], str(agent.id), fontsize=12, ha='center', va='center', color='black')
-#         # TODO: agents_plt和texts_plt位置设置方法
-#         moving_agent.set_data([agent.posX], [agent.posY])
-#         moving_text.set_position([agent.posX, agent.posY])
-        
-#         agents_plt.append(moving_agent)
-#         texts_plt.append(moving_text)
-        
-#         # plt.plot(agent.posX, agent.posY, '^', color='#FFD580', markersize=20)
-#         # plt.text(agent.posX, agent.posY, str(agent.id), fontsize=12, ha='center', va='center', color='black')
-    
-#     # 绘制Astar路径
-#         # path = np.array(agent.routepoints)
-#         # plt.plot(path[:, 0], path[:, 1], '--', color='blue', linewidth=2, label='A* Path')
-    
-#     # 绘制时间戳，使用ax.text动态绘制
-#     TimeStamp = ax.text([], [], 'Init', fontsize=20, ha='left', va='top', color='black')
-#     TimeStamp.set_position([250000, 0])
-    
-#     plt.axis('equal')
-#     # plt.legend()
-#     plt.grid()
-#     plt.pause(0.1)
-#     return agents_plt, texts_plt, TimeStamp
-
 def apply_Astar(agents:list[Agent], astarplanner:AStarPlanner):
     for agent in agents:
         # 计算路径
@@ -116,8 +62,8 @@ def logging_set():
     os.chdir('new/')
     file_name_full = os.path.basename(__file__)
     file_name, _ = os.path.splitext(file_name_full)
-    current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    log_filename = f"{file_name}_{current_time}.log"
+    # current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    # log_filename = f"{file_name}_{current_time}.log"
 
     # === 设置 logging ===
     logging.basicConfig(
@@ -158,19 +104,9 @@ def start_websocket_server():
     loop.run_until_complete(start_server)
     loop.run_forever()
 
-# async def push_to_frontend(data: dict):
-#     global client_ws
-#     if client_ws and client_ws.open:
-#         message = json.dumps(data)
-#         await client_ws.send(message)
-
-# client_ws = None  # 全局变量，用于存储WebSocket客户端连接
-# # 启动 WebSocket 服务器（以守护线程方式）
-# ws_thread = threading.Thread(target=start_websocket_server, daemon=True)
-# ws_thread.start()
 nm2m = 1852  # Nautical miles to meters conversion
 
-def start_simulation(push_to_frontend, stop_check=None):
+def start_simulation(push_to_frontend=None, stop_check=None):
     """
     启动仿真
     
@@ -179,6 +115,11 @@ def start_simulation(push_to_frontend, stop_check=None):
     - stop_check: 可选的回调函数，用于检查是否应该停止仿真
     """
     logging_set()
+    CRUISE = 0 # 巡航状态
+    CHARGING = 1 # 充电状态
+    STAY = 2 # 停留状态
+    MISSION = 3 # 任务状态
+    DROP= 4 # 电量耗尽状态
     '''
     初始化充电节点和船舶代理
     '''
@@ -191,47 +132,67 @@ def start_simulation(push_to_frontend, stop_check=None):
     '''
     # nm2m = 1852  # Nautical miles to meters conversion
     obstacles = create_random_obstacles(random_seed=8)
+    # print(np.int64(obstacles).tolist())
     astar = initialize_map(obstacles)
     # print('plotting map...')
     apply_Astar(agents, astar)
-    # agents_plt, texts_plt, TimeStamp = plot_map(obstacles, charge_nodes, agents)
-    # plt.show()
+    # 巡航线路确定,cruise_route[i]代表到达i节点的路线，即i-1到i节点
+    Cruise_route = []
+    for i in range(len(charge_nodes)):
+        route = astar.planning(charge_nodes[(i-1)%3].posX, charge_nodes[(i-1)%3].posY, charge_nodes[i].posX,charge_nodes[i].posY)
+        Cruise_route.append(route) 
+    for agent in agents:
+        agent.Cruise_routes = Cruise_route
     
     '''
     主循环，频率为1Hz
     '''
     # 仿真步长1s：15min
-    T_loop = 2.0
+    T_loop = 1.0
     iter_num = 0
-    # 仿真计时器
-    current_time = datetime.strptime("00:00", "%H:%M")
-    simu_step = timedelta(minutes=15)
-    # while True:中接收esc键值自动停止
-    isESC = False
-    # listener = keyboard.Listener(on_press=on_press)
-    # listener.start()
-    while not isESC:
+
+    # 在航率
+    service_hour = 0
+    while True:
         # 检查是否应该停止仿真
         if stop_check and stop_check():
             logging.info("收到停止信号，正在停止仿真...")
             break
             
         t_start = time.time()
-        current_time += simu_step
-        time_text = current_time.strftime("%H:%M")
+
+        iter_num += 1
+        time_text = f'{iter_num//4}:{iter_num%4*15:02d}'
         logging.info("***************************Iteration {}: {}***************************".format(iter_num, time_text))
         # 先更新agents
         for idx in range(len(agents)):
+            # if idx !=1:
+            #     continue
             agents[idx].step()
-            # agents_plt[idx].set_data([agents[idx].posX], [agents[idx].posY])
-            # texts_plt[idx].set_position([agents[idx].posX, agents[idx].posY])
+            if agents[idx].state == CRUISE:
+                service_hour += 0.25
             # break
         
-        # 分配充电
+        # 分配充电,遍历每个节点
         for i in range(len(CN_statying_agents)):
-            # 遍历每个节点
-            pass
-        
+            # 先来后到充电，充电功率均分
+            charge_agent_num = min(len(CN_statying_agents[i]), 3)
+            if charge_agent_num == 0: # 防止除数为0
+                continue
+            # 以100kW为最小分辨率
+            max_CP_allow = math.floor(charge_nodes[i].ESS/100/charge_agent_num) * 100
+            charge_p = min(max_CP_allow, 1500)
+            for agent in agents:
+                if agent.id in CN_statying_agents[i][:charge_agent_num]:
+                    agent.ChargingP = charge_p
+                    # 更新节点端充电功率
+                    agent.CN_list[i].ESSPOut += charge_p
+                    agent.Bat += charge_p * 0.25
+                    if agent.Bat >= agent.BatteryCap * 0.9:
+                        agent.state = CRUISE
+                        agent.ChargingP = 0
+                        CN_statying_agents[i].remove(agent.id)
+                    logging.info(f"Agent {agent.id} charging at CN {i}: {charge_p} kW, battery: {agent.Bat:.2f} kWh ({agent.Bat/agent.BatteryCap*100:.2f}%)")
         
         
         
@@ -239,34 +200,26 @@ def start_simulation(push_to_frontend, stop_check=None):
         for idx in range(len(charge_nodes)):
             charge_nodes[idx].step(iter_num)
         
-        # TimeStamp.set_text(time_text)
-        
+        service_rate = round(service_hour / (iter_num * 10 * 0.25) *100,2)
         '''
         打印参数
         '''
         posInfo = [[agent.posX,agent.posY,agent.v,agent.Bat] for agent in agents]
-        # print('posInfo: [[agent.posX, agent.posY, agent.v, agent.Bat], ...]\n', posInfo)
-        CNInfo = [[cn.posX,cn.posY,cn.ESS, cn.WindP[math.floor(iter_num/4)], cn.SolarP[math.floor(iter_num/4)]] for cn in charge_nodes]
-        # print('CNInfo: [[cn.posX, cn.posY, cn.ESS, cn.WindP, cn.SolarP], ...]\n', CNInfo)
+        CNInfo = [[cn.posX,cn.posY,cn.ESS, cn.WindP[math.floor(iter_num/4)], cn.SolarP[math.floor(iter_num/4)], round(cn.ESS/cn.ESSCap*100,2)] for cn in charge_nodes]
         data_to_send = {
             "posInfo": posInfo,
             "CNInfo": CNInfo,
-            "time": time_text
+            "time": time_text,
+            'service_rate': '{}%'.format(service_rate),
         }
         # logging.info(">>>>>>>>>>push_to_frontend<<<<<<<<<<",json.dumps(data_to_send))
         push_to_frontend(data_to_send)
-        
-        # TimeStamp.set_text(time_text)
-        # plt.pause(0.01)
-        
-        # if iter_num > 10:
-        #     break
-        
-        # 休眠时间计算
-        iter_num += 1
+        logging.info(f"Service rate: {service_rate:.2f} %")
         logging.info('') # 打印空行
         elapsed = time.time() - t_start
         time.sleep(max(0, T_loop - elapsed))
     
     logging.info("Simulation ended.")
-    
+
+if __name__ == "__main__":
+    start_simulation()

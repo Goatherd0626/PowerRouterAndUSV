@@ -23,10 +23,12 @@ class ChargeNode:
         self.solar_spec = init_df['光伏规格']  # 光伏规格,kW
         
         # 储能容量按新能源容量的20%计算,输出功率按两小时计算
-        self.ESSCap = (self.wind_spec+self.solar_spec) * 1
+        self.ESSCap = (self.wind_spec+self.solar_spec) * 2
         self.ESSPOutUpper = self.ESSCap  # kW
         self.ESSPOut = 0
         self.ESS = self.ESSCap * 0.5  # kWh,初始化储能电量为50%
+        
+        self.ChargingP_Pending_list = [100, 300, 500] # kW
                 
     def inputEnergydata(self, WindAndSolarFile):
         df = pd.read_csv(WindAndSolarFile,header=10)
@@ -65,6 +67,9 @@ class ChargeNode:
             logging.warning(f'ChargeNode {self.id} ESS is empty!')
         else:
             logging.info(f'ChargeNode {self.id} ESS: {self.ESS:.2f} kWh ({self.ESS/self.ESSCap*100:.2f}%), Wind Power: {self.WindP[idx]:.2f} kW, Solar Power: {self.SolarP[idx]:.2f} kW')
+        
+        # 输出功率置0
+        self.ESSPOut = 0
     
     def plotPowerCurve(self):
         # Wind Power Curve

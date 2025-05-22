@@ -9,6 +9,7 @@ import sys
 import numpy as np
 import logging
 import signal
+
 # 将new目录添加到系统路径，以便导入其中的模块
 sys.path.append(os.path.join(os.path.dirname(__file__), 'new'))
 from new.main import start_simulation
@@ -106,7 +107,7 @@ def convert_numpy_types(obj):
 
 # 同步包装函数，用于从同步代码中调用异步函数
 def sync_broadcast(data):
-    logging.info(">>>>>>>>>>sync_broadcast<<<<<<<<<<{}".format(data))
+    # logging.info(">>>>>>>>>>sync_broadcast<<<<<<<<<<{}".format(data))
     try:
         # 转换NumPy类型为Python原生类型
         converted_data = convert_numpy_types(data)
