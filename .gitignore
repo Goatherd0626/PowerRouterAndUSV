@@ -5,7 +5,7 @@
 celerybeat-schedule
 .DS_Store
 avatar.png
-*.csv
+# *.csv
 .venv/
 new/__pycache__/
 __pycache__/
