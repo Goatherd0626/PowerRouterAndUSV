@@ -24,9 +24,13 @@ class ChargeNode:
         
         # 储能容量按新能源容量的20%计算,输出功率按两小时计算
         self.ESSCap = (self.wind_spec+self.solar_spec) * 2
-        self.ESSPOutUpper = self.ESSCap  # kW
+        self.ESSPOutUpper = self.ESSCap * 0.5  # kW
         self.ESSPOut = 0
         self.ESS = self.ESSCap * 0.5  # kWh,初始化储能电量为50%
+        self.ESS_list = []
+        self.windp_list = []
+        self.solarp_list = []
+        self.pout_list = []
         
         self.ChargingP_Pending_list = [100, 300, 500] # kW
                 
@@ -57,6 +61,7 @@ class ChargeNode:
         '''
         # 计算储能电量和功率
         idx = math.floor(iternum/4) # 15min为一个迭代周期，每小时4个迭代周期
+
         self.ESS += (self.WindP[idx] + self.SolarP[idx] - self.ESSPOut) * 0.25
         if self.ESS > self.ESSCap:
             self.ESS = self.ESSCap
@@ -68,6 +73,10 @@ class ChargeNode:
         else:
             logging.info(f'ChargeNode {self.id} ESS: {self.ESS:.2f} kWh ({self.ESS/self.ESSCap*100:.2f}%), Wind Power: {self.WindP[idx]:.2f} kW, Solar Power: {self.SolarP[idx]:.2f} kW')
         
+        self.ESS_list.append(self.ESS)
+        self.windp_list.append(self.WindP[idx])
+        self.solarp_list.append(self.SolarP[idx])
+        self.pout_list.append(self.ESSPOut)
         # 输出功率置0
         self.ESSPOut = 0
     

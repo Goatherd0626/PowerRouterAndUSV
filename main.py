@@ -12,7 +12,7 @@ import signal
 
 # 将new目录添加到系统路径，以便导入其中的模块
 sys.path.append(os.path.join(os.path.dirname(__file__), 'new'))
-from new.main import start_simulation
+from new.main import start_simulation, start_simulation_improve
 
 app = FastAPI()
 
@@ -132,7 +132,8 @@ def run_simulation():
     global simulation_running, stop_simulation_flag
     try:
         # 使用同步的包装函数
-        start_simulation(sync_broadcast, should_stop_simulation)
+        # start_simulation(sync_broadcast, should_stop_simulation)
+        start_simulation_improve(sync_broadcast, should_stop_simulation)
     except Exception as e:
         print(f"仿真运行过程中出现错误: {str(e)}")
     finally:

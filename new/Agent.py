@@ -140,6 +140,7 @@ class Agent:
         routepoints_array = np.array(self.routepoints)
         segment_lengths = np.sqrt(np.sum(np.diff(routepoints_array, axis=0) ** 2, axis=1))
         total_length = np.sum(segment_lengths) / 1000
+        self.nextSegCost = self.getBatCost() * total_length
         if self.getBatCost() * total_length > self.Bat - self.BatteryCap*0.1:
             return True
         else:
@@ -194,7 +195,10 @@ def getAgent():
     df = pd.read_csv(file_path)
     agents = []
     for i in range(len(df)):
+        # if i > 2: # 控制agent数量
+        #     break
         agents.append(Agent(df.iloc[i], CN_list))
+    
     return agents
     
 if __name__ == "__main__":
