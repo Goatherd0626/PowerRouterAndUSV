@@ -2,6 +2,7 @@
 .idea/
 *.pyc
 *.log
+*.zip
 celerybeat-schedule
 .DS_Store
 avatar.png
