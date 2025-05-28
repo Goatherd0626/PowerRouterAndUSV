@@ -161,6 +161,7 @@ def start_simulation(push_to_frontend=None, stop_check=None):
     # 在航率
     service_hour = 0
     service = {'service_rate_Total': [], 'service_rate_RT': []}
+    time_text_list = []
     while True:
         # 检查是否应该停止仿真
         delta_service_hour = 0
@@ -172,6 +173,7 @@ def start_simulation(push_to_frontend=None, stop_check=None):
 
         iter_num += 1
         time_text = f'{iter_num//4}:{iter_num%4*15:02d}'
+        time_text_list.append(time_text)
         if iter_num > 24*7*4:
             break
         logging.info("***************************Iteration {}: {}***************************".format(iter_num, time_text))
