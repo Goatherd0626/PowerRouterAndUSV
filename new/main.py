@@ -220,8 +220,16 @@ def start_simulation(push_to_frontend=None, stop_check=None):
         '''
         posInfo = [[agent.posX,agent.posY,agent.v,agent.Bat] for agent in agents]
         CNInfo = [[cn.posX,cn.posY,cn.ESS, cn.WindP[math.floor(iter_num/4)], cn.SolarP[math.floor(iter_num/4)], round(cn.ESS/cn.ESSCap*100,2)] for cn in charge_nodes]
-        CNCurve = [[cn.ESS_list[-96:], cn.windp_list[-96:], cn.solarp_list[-96:], cn.pout_list[-96:]] for cn in charge_nodes]
-        service_rate_curve = [service['service_rate_Total'][-96:], service['service_rate_RT'][-96:]] 
+        CNCurve = [
+            [[time_text_list[-96:], cn.ESS_list[-96:]],
+              [time_text_list[-96:], cn.windp_list[-96:]],
+              [time_text_list[-96:], cn.solarp_list[-96:]],
+              [time_text_list[-96:],cn.pout_list[-96:]]]
+            for cn in charge_nodes]
+        service_rate_curve = [
+            [time_text_list[-96:], service['service_rate_Total'][-96:]],
+            [time_text_list[-96:], service['service_rate_RT'][-96:]]
+                               ] 
         
         data_to_send = {
             "posInfo": posInfo,
