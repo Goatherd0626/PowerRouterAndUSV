@@ -134,10 +134,11 @@ def start_simulation(push_to_frontend=None, stop_check=None):
     # nm2m = 1852  # Nautical miles to meters conversion
     obstacles = create_random_obstacles(random_seed=8)
     
-    obs_to_send = {
-            "obs_info": np.int64(obstacles).tolist(),
-        }
-    push_to_frontend(obs_to_send)
+    # obs_to_send = {
+    #         "obs_info": np.int64(obstacles).tolist(),
+    #     }
+    # push_to_frontend(obs_to_send)
+    obs_info = np.int64(obstacles).tolist()
     
     astar = initialize_map(obstacles)
     # print('plotting map...')
@@ -154,7 +155,7 @@ def start_simulation(push_to_frontend=None, stop_check=None):
     主循环，频率为1Hz
     '''
     # 仿真步长1s：15min
-    T_loop = 0.1
+    T_loop = 1.0
     iter_num = 0
 
     # 在航率
@@ -229,6 +230,7 @@ def start_simulation(push_to_frontend=None, stop_check=None):
             'service_rate': '{}%'.format(service_rate),
             'CNCurve': CNCurve,
             'service_rate_curve': service_rate_curve,
+            'obs_info': obs_info,
         }
         # logging.info(">>>>>>>>>>push_to_frontend<<<<<<<<<<",json.dumps(data_to_send))
         push_to_frontend(data_to_send)
@@ -290,10 +292,11 @@ def start_simulation_improve(push_to_frontend=None, stop_check=None):
     # nm2m = 1852  # Nautical miles to meters conversion
     obstacles = create_random_obstacles(random_seed=8)
     
-    obs_to_send = {
-            "obs_info": np.int64(obstacles).tolist(),
-        }
-    push_to_frontend(obs_to_send)
+    # obs_to_send = {
+    #         "obs_info": np.int64(obstacles).tolist(),
+    #     }
+    # push_to_frontend(obs_to_send)
+    obs_info = np.int64(obstacles).tolist()
     
     astar = initialize_map(obstacles)
     # print('plotting map...')
@@ -310,7 +313,7 @@ def start_simulation_improve(push_to_frontend=None, stop_check=None):
     主循环，频率为1Hz
     '''
     # 仿真步长1s：15min
-    T_loop = 0.1
+    T_loop = 1.0
     iter_num = 0
 
     # 在航率
@@ -327,8 +330,8 @@ def start_simulation_improve(push_to_frontend=None, stop_check=None):
 
         iter_num += 1
         time_text = f'{iter_num//4}:{iter_num%4*15:02d}'
-        if iter_num > 24*7*4:
-            break
+#        if iter_num > 24*7*4:
+#           break
         logging.info("***************************Iteration {}: {}***************************".format(iter_num, time_text))
         # 先更新agents
         for idx in range(len(agents)):
@@ -387,6 +390,7 @@ def start_simulation_improve(push_to_frontend=None, stop_check=None):
             'service_rate': '{}%'.format(service_rate),
             'CNCurve': CNCurve,
             'service_rate_curve': service_rate_curve,
+            'obs_info': obs_info,
         }
         # logging.info(">>>>>>>>>>push_to_frontend<<<<<<<<<<",json.dumps(data_to_send))
         push_to_frontend(data_to_send)
