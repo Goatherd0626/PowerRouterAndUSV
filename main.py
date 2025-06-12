@@ -54,7 +54,29 @@ async def websocket_endpoint(websocket: WebSocket):
             # 接收客户端消息
             data = await websocket.receive_text()
             
+            # TODO: 新增选择运行模式，选项如：1.算法是否优化。2.场景选择
+            
             if data == "start" and not simulation_running:
+                await websocket.send_json({"status": "starting", "message": "仿真开始启动..."})
+                
+                # 在新线程中启动仿真
+                stop_simulation_flag = False
+                simulation_running = True
+                simulation_thread = threading.Thread(target=run_simulation)
+                simulation_thread.daemon = True
+                simulation_thread.start()
+            
+            elif data == 'greedy' and not simulation_running:
+                await websocket.send_json({"status": "starting", "message": "仿真开始启动..."})
+                
+                # 在新线程中启动仿真
+                stop_simulation_flag = False
+                simulation_running = True
+                simulation_thread = threading.Thread(target=run_simulation)
+                simulation_thread.daemon = True
+                simulation_thread.start()
+                
+            elif data == 'improved' and not simulation_running:
                 await websocket.send_json({"status": "starting", "message": "仿真开始启动..."})
                 
                 # 在新线程中启动仿真

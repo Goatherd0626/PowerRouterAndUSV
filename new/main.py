@@ -232,7 +232,6 @@ def start_simulation(push_to_frontend=None, stop_check=None):
             [time_text_list[-96:], service['service_rate_Total'][-96:]],
             [time_text_list[-96:], service['service_rate_RT'][-96:]]
                                ] 
-        
         data_to_send = {
             "posInfo": posInfo,
             "CNInfo": CNInfo,
@@ -329,6 +328,7 @@ def start_simulation_improve(push_to_frontend=None, stop_check=None):
     # 在航率
     service_hour = 0
     service = {'service_rate_Total': [], 'service_rate_RT': []}
+        
     time_text_list = []
     while True:
         # 检查是否应该停止仿真
@@ -412,6 +412,7 @@ def start_simulation_improve(push_to_frontend=None, stop_check=None):
             'service_rate_curve': service_rate_curve,
             'obs_info': obs_info,
         }
+        print(np.array(CNCurve).tolist())
         # logging.info(">>>>>>>>>>push_to_frontend<<<<<<<<<<",json.dumps(data_to_send))
         push_to_frontend(data_to_send)
         logging.info(f"Service rate: {service_rate:.2f} %")
